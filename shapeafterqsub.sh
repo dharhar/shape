@@ -2,6 +2,11 @@
 #$ -S /bin/bash
 #$ -o /ifshome/$USER/log -j y
 
+
+#-------Change this you your enigma directory
+runDirectory=/U1/hardyd/shape/enigma
+
+
 outDirectory=$1
 groupfile=$2
 
@@ -11,7 +16,6 @@ groupfile=$2
 
 FS=/usr/local/freesurfer/
 FS_binary=${FS}bin/
-runDirectory=/U1/hardyd/shape/enigma
 
 
 setROIS="10 11 12 13 17 18 26 49 50 51 52 53 54 58"
