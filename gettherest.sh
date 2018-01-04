@@ -1,5 +1,11 @@
 #!/bin/bash
 
+
+#-----Change this directory
+runDirectory=/U1/hardyd/shape/enigma
+
+
+
 runFS=$1
 outDirectory=$2
 logdir=$3
@@ -57,7 +63,6 @@ done;
 
 FS=/usr/local/freesurfer/
 FS_binary=${FS}bin/
-runDirectory=/U1/hardyd/shape/enigma
 
 
 
@@ -81,7 +86,7 @@ for subject in `cut -d',' -f1 ${groupfile}` ; do
 		mkdir -p ${outDirectory}/${subject}/
 
 
-		cmd="qsub -o ${logdir}/${subject}.txt -j y -S /bin/bash /U1/hardyd/shape/enigma/medial.sh ${runFS} ${subject} ${outDirectory}/${subject}/ ${setROIS}"
+		cmd="qsub -o ${logdir}/${subject}.txt -j y -S /bin/bash /${runDirectory}/medial.sh ${runFS} ${subject} ${outDirectory}/${subject}/ ${setROIS}"
 
 		echo $cmd
 		echo $cmd > ${outDirectory}/${subject}/run_notes.txt
