@@ -3,7 +3,7 @@
 #$ -o /ifshome/$USER/log -j y
 
 
-#-------Change this you your enigma directory
+#-------Change this to your enigma directory
 runDirectory=/U1/hardyd/shape/enigma
 
 

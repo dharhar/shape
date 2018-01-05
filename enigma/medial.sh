@@ -11,9 +11,9 @@ done
 datadir=$1
 subj=$2
 outdir=$3
-
+runDirectory=$4
 #for testing:
 #roistring="10 26"
 
-perl /U1/hardyd/shape/enigma/MedialDemonsShared/bin/Medial_Demons_shared.pl ${datadir}/${subj}/mri/aseg.mgz ${roistring} ${outdir} /U1/hardyd/shape/enigma/MedialDemonsShared/ /usr/local/freesurfer/bin/
+perl /${runDirectory}/MedialDemonsShared/bin/Medial_Demons_shared.pl ${datadir}/${subj}/mri/aseg.mgz ${roistring} ${outdir} /${runDirectory}/MedialDemonsShared/ /usr/local/freesurfer/bin/
 

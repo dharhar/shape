@@ -2,14 +2,16 @@
 #$ -S /bin/bash
 #$ -o /ifshome/$USER/log -j y
 
-runFS=$1
-outDirectory=$2
-logdir=$3
-groupfile=$4
 
 #-------Change this to your enigma directory
 runDirectory=/U1/hardyd/shape/enigma
 
+
+
+runFS=$1
+outDirectory=$2
+logdir=$3
+groupfile=$4
 
 
 #commented testing parameters
@@ -101,7 +103,7 @@ for subject in `cut -d',' -f1 ${groupfile}` ; do
 
 		mkdir -p ${outDirectory}/${subject}/
 
-		cmd="qsub -o ${logdir}/${subject}.txt -j y -S /bin/bash /${runDirectory}/medial.sh ${runFS} ${subject} ${outDirectory}/${subject}/ ${setROIS}"
+		cmd="qsub -o ${logdir}/${subject}.txt -j y -S /bin/bash /${runDirectory}/medial.sh ${runFS} ${subject} ${outDirectory}/${subject}/ ${runDirectory} ${setROIS}"
 
 		echo $cmd
 		echo $cmd > ${outDirectory}/${subject}/run_notes.txt
