@@ -1,0 +1,677 @@
+<head>
+<title>Shape Viewer</title>
+<!-- This is a hacked together elaboration my webgl hello-world program, but it works. Just put the resliced_mesh files in the same directory as this file, and point a web server at it. -->
+<style>
+body {
+
+  background-color: black;
+}
+#c {
+  border: 2px solid black;
+  width: 40em;
+  height: 30em;
+}
+#fps {
+  width: 20em;
+}
+#whatFile {
+  width: 2em;
+}
+#main {
+  display: block;
+  margin: auto;
+  text-align: center;
+  color: LimeGreen;
+}
+#usage {
+  display: block;
+  text-align: left;
+  max-width: 30em;
+  margin: auto;
+}
+</style>
+<div id="main">
+<canvas id="c" width="400" height="400" ></canvas>
+<br>
+<button id=submitFile onclick=selectFile(10)>10</button>
+<button id=submitFile onclick=selectFile(11)>11</button>
+<button id=submitFile onclick=selectFile(12)>12</button>
+<button id=submitFile onclick=selectFile(13)>13</button>
+<button id=submitFile onclick=selectFile(17)>17</button>
+<button id=submitFile onclick=selectFile(18)>18</button>
+<button id=submitFile onclick=selectFile(26)>26</button>
+<button id=submitFile onclick=selectFile(49)>49</button>
+<button id=submitFile onclick=selectFile(50)>50</button>
+<button id=submitFile onclick=selectFile(51)>51</button>
+<button id=submitFile onclick=selectFile(52)>52</button>
+<button id=submitFile onclick=selectFile(53)>53</button>
+<button id=submitFile onclick=selectFile(54)>54</button>
+<button id=submitFile onclick=selectFile(58)>58</button>
+<span id="fps"></span>
+  <div id="usage">
+  <p><u>Controls</u></p>
+  <ul>
+    <li>Rotate: arrow keys and Z/X</li>
+    <li>Move around: WASD</li>
+    <li>Zoom: Q/E</li>
+  </ul>
+  </div>
+</div>
+
+<script id="vs" type="x-shader/x-vertex">#version 300 es
+
+  in vec4 a_position;
+  in vec3 a_normal;
+  out vec3 pos_normal;
+  uniform mat4 transform;
+
+  void main() {
+    gl_Position = transform * a_position;
+
+    pos_normal = mat3(transform) * a_normal;
+  }
+
+</script>
+<script id="fs" type="x-shader/x-fragment">#version 300 es
+
+  precision mediump float;
+  in vec3 pos_normal;
+  out vec4 outColor;
+
+  void main() { 
+    vec4 base_color = vec4(1.1,0.8,0.8,1);
+    float light = dot(pos_normal,vec3(0.1,0.3,-0.7));
+    outColor = sin( vec4(base_color.rbg*light,1) - 0.5*vec4(0, pos_normal.xy, 0) );
+  }
+
+</script>
+<script>
+
+
+
+function shaderSource(elmID){
+	var source = document.getElementById(elmID);
+	if(!source || source.text == ""){ console.log(elmID + " shader not found"); return null; }
+	return source.text;
+}
+
+function createShader(gl, type, source){
+	var shader = gl.createShader(type);
+	gl.shaderSource(shader,source);
+	gl.compileShader(shader);
+
+  var success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
+  if (success)
+    return shader;
+  console.log("no compile: "+gl.getShaderInfoLog(shader));
+}
+
+function createProgram(gl,vShader,fShader){
+	var prog = gl.createProgram();
+	gl.attachShader(prog,vShader);
+	gl.attachShader(prog,fShader);
+	gl.linkProgram(prog);
+
+  var success = gl.getProgramParameter(prog, gl.LINK_STATUS);
+	gl.deleteShader(fShader);
+	gl.deleteShader(vShader);
+  if (success)
+    return prog;
+  console.log("no program: "+gl.getProgramInfoLog(program));
+}
+
+
+var canvas = document.getElementById("c");
+var gl = canvas.getContext("webgl2");
+if (!gl) { console.log("no gl!"); }
+
+var vertShaderSource = shaderSource("vs");
+var fragShaderSource = shaderSource("fs");
+
+var vs = createShader(gl, gl.VERTEX_SHADER, vertShaderSource);
+var fs = createShader(gl, gl.FRAGMENT_SHADER, fragShaderSource);
+
+gl.setSize = function(w,h){
+  this.canvas.style.width = w + "px";
+  this.canvas.style.height = h + "px";
+  this.canvas.width = w;
+  this.canvas.height = h;
+  this.viewport(0,0,w,h);
+}
+
+function createRequest() {
+  try {
+    request = new XMLHttpRequest();
+  } catch (tryMS) {
+    try {
+      request = new ActiveXObject("Msxml2.XMLHTTP");
+    } catch (otherMS) {
+      try {
+        request = new ActiveXObject("Microsoft.XMLHTTP");
+      } catch (failed) {
+        request = null;
+      }
+    }
+  }	
+  return request;
+}
+
+if (sessionStorage.getItem("roi") === null) sessionStorage.setItem("roi","10");
+
+
+//some of this based on glMatrix  https://github.com/toji/gl-matrix/blob/master/src/gl-matrix/mat4.js
+
+function rtd(r) {
+  return r * 180 / Math.PI;
+}
+
+function dtr(d) {
+  return d * Math.PI / 180;
+}
+
+
+tr4Matrix = function (x=0,y=0,z=0,mat) {
+  mat[12] = mat[0] * x + mat[4] * y + mat[8]	* z + mat[12];
+  mat[13] = mat[1] * x + mat[5] * y + mat[9]	* z + mat[13];
+  mat[14] = mat[2] * x + mat[6] * y + mat[10]	* z + mat[14];
+  mat[15] = mat[3] * x + mat[7] * y + mat[11]	* z + mat[15];
+  return mat;
+},
+
+
+i4Matrix = function () {
+  return [1,0,0,0,
+          0,1,0,0,
+          0,0,1,0,
+          0,0,0,1];
+}
+
+
+sc4Matrix = function (x=1,y=1,z=1,mat) {
+  mat[0] *= x;
+  mat[1] *= x;
+  mat[2] *= x;
+  mat[3] *= x;
+  mat[4] *= y;
+  mat[5] *= y;
+  mat[6] *= y;
+  mat[7] *= y;
+  mat[8] *= z;
+  mat[9] *= z;
+  mat[10] *= z;
+  mat[11] *= z;
+  return mat;
+}
+
+p4Matrix = function(near=.01, far=2000, fov=dtr(60), aspect=1.3333) {
+  var f = Math.tan(Math.PI * 0.5 - 0.5 * fov);
+  var rangeInv = 1.0 / (near - far);
+
+  return [
+    f / aspect, 0, 0, 0,
+    0, f, 0, 0,
+    0, 0, (near + far) * rangeInv, -1,
+    0, 0, near * far * rangeInv * 2, 0,
+  ];
+}
+
+
+rx4Matrix = function (radian, mat) {
+  let s = Math.sin(radian);
+  let c = Math.cos(radian);
+  let a10 = mat[4];
+  let a11 = mat[5];
+  let a12 = mat[6];
+  let a13 = mat[7];
+  let a20 = mat[8];
+  let a21 = mat[9];
+  let a22 = mat[10];
+  let a23 = mat[11];
+
+
+  mat[4] = a10 * c + a20 * s;
+  mat[5] = a11 * c + a21 * s;
+  mat[6] = a12 * c + a22 * s;
+  mat[7] = a13 * c + a23 * s;
+  mat[8] = a20 * c - a10 * s;
+  mat[9] = a21 * c - a11 * s;
+  mat[10] = a22 * c - a12 * s;
+  mat[11] = a23 * c - a13 * s;
+  return mat;
+}
+
+ry4Matrix = function (radian, mat) {
+  let s = Math.sin(radian);
+  let c = Math.cos(radian);
+  let a00 = mat[0];
+  let a01 = mat[1];
+  let a02 = mat[2];
+  let a03 = mat[3];
+  let a20 = mat[8];
+  let a21 = mat[9];
+  let a22 = mat[10];
+  let a23 = mat[11];
+
+
+  mat[0] = a00 * c - a20 * s;
+  mat[1] = a01 * c - a21 * s;
+  mat[2] = a02 * c - a22 * s;
+  mat[3] = a03 * c - a23 * s;
+  mat[8] = a00 * s + a20 * c;
+  mat[9] = a01 * s + a21 * c;
+  mat[10] = a02 * s + a22 * c;
+  mat[11] = a03 * s + a23 * c;
+  return mat;
+}
+
+rz4Matrix = function (radian, mat) {
+  let s = Math.sin(radian);
+  let c = Math.cos(radian);
+  let a00 = mat[0];
+  let a01 = mat[1];
+  let a02 = mat[2];
+  let a03 = mat[3];
+  let a10 = mat[4];
+  let a11 = mat[5];
+  let a12 = mat[6];
+  let a13 = mat[7];
+
+
+  mat[0] = a00 * c + a10 * s;
+  mat[1] = a01 * c + a11 * s;
+  mat[2] = a02 * c + a12 * s;
+  mat[3] = a03 * c + a13 * s;
+  mat[4] = a10 * c - a00 * s;
+  mat[5] = a11 * c - a01 * s;
+  mat[6] = a12 * c - a02 * s;
+  mat[7] = a13 * c - a03 * s;
+  return mat;
+}
+
+
+
+
+
+
+
+mProduct = function(a, b){ 
+    let out = [];
+    let a00 = a[0], a01 = a[1], a02 = a[2], a03 = a[3],
+        a10 = a[4], a11 = a[5], a12 = a[6], a13 = a[7],
+        a20 = a[8], a21 = a[9], a22 = a[10], a23 = a[11],
+        a30 = a[12], a31 = a[13], a32 = a[14], a33 = a[15];
+
+    let b0  = b[0], b1 = b[1], b2 = b[2], b3 = b[3];
+    out[0] = b0*a00 + b1*a10 + b2*a20 + b3*a30;
+    out[1] = b0*a01 + b1*a11 + b2*a21 + b3*a31;
+    out[2] = b0*a02 + b1*a12 + b2*a22 + b3*a32;
+    out[3] = b0*a03 + b1*a13 + b2*a23 + b3*a33;
+
+    b0 = b[4]; b1 = b[5]; b2 = b[6]; b3 = b[7];
+    out[4] = b0*a00 + b1*a10 + b2*a20 + b3*a30;
+    out[5] = b0*a01 + b1*a11 + b2*a21 + b3*a31;
+    out[6] = b0*a02 + b1*a12 + b2*a22 + b3*a32;
+    out[7] = b0*a03 + b1*a13 + b2*a23 + b3*a33;
+
+    b0 = b[8]; b1 = b[9]; b2 = b[10]; b3 = b[11];
+    out[8] = b0*a00 + b1*a10 + b2*a20 + b3*a30;
+    out[9] = b0*a01 + b1*a11 + b2*a21 + b3*a31;
+    out[10] = b0*a02 + b1*a12 + b2*a22 + b3*a32;
+    out[11] = b0*a03 + b1*a13 + b2*a23 + b3*a33;
+
+    b0 = b[12]; b1 = b[13]; b2 = b[14]; b3 = b[15];
+    out[12] = b0*a00 + b1*a10 + b2*a20 + b3*a30;
+    out[13] = b0*a01 + b1*a11 + b2*a21 + b3*a31;
+    out[14] = b0*a02 + b1*a12 + b2*a22 + b3*a32;
+    out[15] = b0*a03 + b1*a13 + b2*a23 + b3*a33;
+    return out;	
+}
+
+
+
+
+function invert(out,mat) {
+		if(mat === undefined) mat = out; //If input isn't sent, then output is also input
+
+	    var a00 = mat[0], a01 = mat[1], a02 = mat[2], a03 = mat[3],
+	        a10 = mat[4], a11 = mat[5], a12 = mat[6], a13 = mat[7],
+	        a20 = mat[8], a21 = mat[9], a22 = mat[10], a23 = mat[11],
+	        a30 = mat[12], a31 = mat[13], a32 = mat[14], a33 = mat[15],
+
+	        b00 = a00 * a11 - a01 * a10,
+	        b01 = a00 * a12 - a02 * a10,
+	        b02 = a00 * a13 - a03 * a10,
+	        b03 = a01 * a12 - a02 * a11,
+	        b04 = a01 * a13 - a03 * a11,
+	        b05 = a02 * a13 - a03 * a12,
+	        b06 = a20 * a31 - a21 * a30,
+	        b07 = a20 * a32 - a22 * a30,
+	        b08 = a20 * a33 - a23 * a30,
+	        b09 = a21 * a32 - a22 * a31,
+	        b10 = a21 * a33 - a23 * a31,
+	        b11 = a22 * a33 - a23 * a32,
+
+	        // Calculate the determinant
+	        det = b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06;
+
+	    if (!det) {console.log("no inverse"); return false;}
+	    det = 1.0 / det;
+
+	    out[0] = (a11 * b11 - a12 * b10 + a13 * b09) * det;
+	    out[1] = (a02 * b10 - a01 * b11 - a03 * b09) * det;
+	    out[2] = (a31 * b05 - a32 * b04 + a33 * b03) * det;
+	    out[3] = (a22 * b04 - a21 * b05 - a23 * b03) * det;
+	    out[4] = (a12 * b08 - a10 * b11 - a13 * b07) * det;
+	    out[5] = (a00 * b11 - a02 * b08 + a03 * b07) * det;
+	    out[6] = (a32 * b02 - a30 * b05 - a33 * b01) * det;
+	    out[7] = (a20 * b05 - a22 * b02 + a23 * b01) * det;
+	    out[8] = (a10 * b10 - a11 * b08 + a13 * b06) * det;
+	    out[9] = (a01 * b08 - a00 * b10 - a03 * b06) * det;
+	    out[10] = (a30 * b04 - a31 * b02 + a33 * b00) * det;
+	    out[11] = (a21 * b02 - a20 * b04 - a23 * b00) * det;
+	    out[12] = (a11 * b07 - a10 * b09 - a12 * b06) * det;
+	    out[13] = (a00 * b09 - a01 * b07 + a02 * b06) * det;
+	    out[14] = (a31 * b01 - a30 * b03 - a32 * b00) * det;
+	    out[15] = (a20 * b03 - a21 * b01 + a22 * b00) * det;
+
+    return true;
+}
+
+
+
+function triNorm(p0, p1, p2) {
+
+  output = [];
+
+  var p1x = p1[0] - p0[0];
+  var p1y = p1[1] - p0[1];
+  var p1z = p1[2] - p0[2];
+
+  var p2x = p2[0] - p0[0];
+  var p2y = p2[1] - p0[1];
+  var p2z = p2[2] - p0[2];
+
+  var p3x = p1y * p2z - p1z * p2y;
+  var p3y = p1z * p2x - p1x * p2z;
+  var p3z = p1x * p2y - p1y * p2x;
+
+  var mag = Math.sqrt(p3x * p3x + p3y * p3y + p3z * p3z);
+  if (mag === 0) {
+    output[0] = 0;
+    output[1] = 0;
+    output[2] = 0;
+  } else {
+    output[0] = p3x / mag;
+    output[1] = p3y / mag;
+    output[2] = p3z / mag;
+  }
+
+  return output;
+}
+
+function main(model) {
+
+  var program = createProgram(gl, vs, fs);
+  gl.useProgram(program);
+  var positionAttrLoc = gl.getAttribLocation(program, "a_position");
+  var normal_loc = gl.getAttribLocation(program, "a_normal");
+  var transform_loc = gl.getUniformLocation(program, "transform");
+
+  var vao = gl.createVertexArray();
+  gl.bindVertexArray(vao);
+  //ready position buffer
+  var positionBuffer = gl.createBuffer();
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(model.verts), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(positionAttrLoc);
+  gl.vertexAttribPointer(positionAttrLoc, 3, gl.FLOAT, false, 0, 0);
+  gl.bindBuffer(gl.ARRAY_BUFFER, null);
+
+
+  //ready normal buffer
+  var normalBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(model.norms), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(normal_loc);
+  gl.vertexAttribPointer(normal_loc, 3, gl.FLOAT, true, 0, 0);
+  gl.bindBuffer(gl.ARRAY_BUFFER, null);
+
+  whi = window.innerHeight * .7;
+  wwi = Math.floor(whi * (4/3));
+
+  function drawFrame(v) {
+
+    gl.setSize(wwi,whi);
+    gl.clearColor(0,0,0,0);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+      
+
+        tmat = p4Matrix();
+
+        tr4Matrix(v.t.x,v.t.y,v.t.z,tmat);
+
+        rx4Matrix(v.r.x,tmat);
+        ry4Matrix(v.r.y,tmat);
+        rz4Matrix(v.r.z,tmat);
+        sc4Matrix(v.s.x,v.s.y,v.s.z,tmat);
+
+        tr4Matrix(v.wt.x,v.wt.y,v.wt.z,tmat); // center the model first
+
+  /*   
+        document.getElementById("fps").innerHTML = '<br>' +
+        tmat[0].toFixed(2) + '   '+ tmat[4].toFixed(2) + '   '+ tmat[8].toFixed(2) + '   '+ tmat[12].toFixed(2) + '<br>'+ 
+        tmat[1].toFixed(2) + '   '+ tmat[5].toFixed(2) + '   '+ tmat[9].toFixed(2) + '   '+ tmat[13].toFixed(2) + '<br>'+ 
+        tmat[2].toFixed(2) + '   '+ tmat[6].toFixed(2) + '   '+ tmat[10].toFixed(2) + '   '+ tmat[14].toFixed(2) + '<br>'+ 
+        tmat[3].toFixed(2) + '   '+ tmat[7].toFixed(2) + '   '+ tmat[11].toFixed(2) + '   '+ tmat[15].toFixed(2) + '<br>';
+  */
+
+        gl.uniformMatrix4fv(transform_loc,false,tmat);
+        gl.enable(gl.CULL_FACE);
+        gl.enable(gl.DEPTH_TEST);
+        gl.useProgram(program);
+        gl.bindVertexArray(vao);
+        gl.drawArrays(gl.TRIANGLES, 0, model.verts.length/3);
+
+
+  }
+
+  var lastFrame = performance.now();
+  var active = true;
+  var radPerSec	= (Math.PI / 180.0)*180;
+  //var revPerSec	= (Math.PI / 180.0) * 30;
+  var fps = 65;
+  var keys = {};
+  var moves = { m: {w:0.5, n:0, z:0},
+                t: {x:0, y:0, z:0},
+                r: {x:0, y:0, z:0},
+                s: {x:1, y:1, z:1},
+                f: {x:1, y:0, z:0},
+                wt: {x:0, y:0, z:0},
+                wr: {x:0, y:0, z:0}, }
+  moves.wt.x -= model.midx; moves.wt.y -= model.midy; moves.wt.z -= model.midz; moves.t.z -= 42;
+
+  drawFrame(moves);
+  if (active) window.requestAnimationFrame(run);
+  document.getElementById("c").onclick = function() {
+    active = (active==true? false : true);
+    if (active) window.requestAnimationFrame(run);
+  }
+
+  function run () {
+
+    var nowtime = performance.now();
+    var dt = (nowtime - lastFrame)/1000;
+    if (dt > 1/fps ) {
+
+      if (keys.up) moves.r.x -= radPerSec*dt;
+      if (keys.down) moves.r.x += radPerSec*dt;
+      if (keys.left) moves.r.y -= radPerSec*dt;
+      if (keys.right) moves.r.y += radPerSec*dt;
+      if (keys.w) moves.t.y += 50*dt;
+      if (keys.s) moves.t.y -= 50*dt;
+      if (keys.a) moves.t.x -= 50*dt;
+      if (keys.d) moves.t.x += 50*dt;
+      if (keys.q) moves.t.z += 93*dt;
+      if (keys.e) moves.t.z -= 93*dt;
+      if (keys.z) moves.r.z += radPerSec*dt;
+      if (keys.x) moves.r.z -= radPerSec*dt;
+
+
+
+
+
+      drawFrame(moves);
+      lastFrame = performance.now();
+    }
+    if (active) window.requestAnimationFrame(run); 
+
+  }
+
+
+  keycodes = {
+    37: 'left',
+    38: 'up',
+    39: 'right',
+    40: 'down',
+    65: 'a',
+    68: 'd',
+    87: 'w',
+    83: 's',
+    81: 'q',
+    69: 'e',
+    49: '1',
+    50: '2',
+    51: '3',
+    52: '4',
+    53: '5',
+    54: '6',
+    55: '7',
+    56: '8',
+    90: 'z',
+    88: 'x',
+    67: 'c'
+  }
+
+  onkeydown = onkeyup = function(e){
+      e = e || event;
+      keys[keycodes[e.keyCode]] = e.type == 'keydown';
+  }
+
+} //end main
+
+
+
+function parser (txt) {
+
+  txt = txt.trim() + '\n';
+  var model = {};
+  var posA = 0;
+  var posB = txt.indexOf("\n",0);
+  var vArr = ['',];
+  model.verts = [];
+  model.norms = [];
+  model.colors = [];
+  var hx,lx,hy,ly,hz,lz;
+  var count = 0;
+
+  while(posB > posA){
+
+    var line = txt.substring(posA,posB).trim();
+
+    switch(line.charAt(0)){
+      // Sample Data
+      //Vertex 1 140.753 133.406 99.9389 
+      //Face 5000 2499 2501 2502
+
+      case "V":
+        line = line.split(" ");
+        var x = parseFloat(line[2]);
+        var y = parseFloat(line[3]);
+        var z = parseFloat(line[4]);
+
+        //set low and high points
+        if (count == 0) { hx=lx=x; hy=ly=y; hz=lz=z; count++; }
+        else {if(x<lx)lx=x;if(y<ly)ly=y;if(z<lz)lz=z;if(x>hx)hx=x;if(y>hy)hy=y;if(z>hz)hz=z;}
+
+        vArr.push(x);
+        vArr.push(y);
+        vArr.push(z);
+        break;
+
+      case "F":
+        line = line.split(" ");
+        var x1 =vArr[line[2]*3-2];
+        var y1 =vArr[line[2]*3-1];
+        var z1 =vArr[line[2]*3];
+        var x2 =vArr[line[3]*3-2];
+        var y2 =vArr[line[3]*3-1];
+        var z2 =vArr[line[3]*3];
+        var x3 =vArr[line[4]*3-2];
+        var y3 =vArr[line[4]*3-1];
+        var z3 =vArr[line[4]*3];
+
+        model.verts.push(x1);
+        model.verts.push(y1);
+        model.verts.push(z1);
+
+        model.verts.push(x2);
+        model.verts.push(y2);
+        model.verts.push(z2);
+
+        model.verts.push(x3);
+        model.verts.push(y3);
+        model.verts.push(z3);
+
+        var norm = triNorm([x1,y1,z1],[x2,y2,z2],[x3,y3,z3]);
+        model.norms = model.norms.concat(norm);
+        model.norms = model.norms.concat(norm);
+        model.norms = model.norms.concat(norm); break;
+
+    }
+    posA = posB+1;
+    posB = txt.indexOf("\n",posA);
+  }
+
+  //set middle positions and dummy colors
+  model.midx = (lx+hx)/2; model.midy = (ly+hy)/2; model.midz = (lz+hz)/2;
+  model.colors = model.verts;
+
+  main(model);
+}
+
+
+
+
+function loadMeshFile(meshFile) {
+  filePath =  "/shape/"+meshFile;
+  var meshRequest = createRequest();
+  meshRequest.open("GET", filePath, true);
+  meshRequest.onreadystatechange = function() {
+    if (meshRequest.readyState == 4 && meshRequest.status == 200){
+      mesh = meshRequest.responseText;
+      parser(mesh);
+      return mesh;
+    }
+    else return "not found";
+  }
+  meshRequest.send(null);
+}
+
+
+
+firstFile = sessionStorage.getItem("roi");
+document.getElementById("fps").innerHTML = firstFile;
+firstFile = "resliced_mesh_"+firstFile+".m";
+loadMeshFile(firstFile);
+
+function selectFile(roinum) {
+  sessionStorage.setItem("roi",roinum);
+  location = location;
+}
+
+
+
+
+</script>
