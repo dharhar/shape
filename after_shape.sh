@@ -26,7 +26,7 @@ cat<<EOF
 
 USAGE: 
 
-Run this script after the jobs submitted by shapegroupqsub.sh are completed. You can check them with 'qstat'.
+Run this script after the jobs submitted by batch_shape are completed. You can check them with 'squeue' or 'qstat'.
 
 $0 [Shape output directory] [ groupfile ]
   Give the full pathname for each argument.

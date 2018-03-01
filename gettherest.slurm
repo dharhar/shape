@@ -22,7 +22,7 @@ USAGE:
 
 $0 [Freesurfer results directory] [Shape output directory] [logfile directory] [ groupfile ]
 
-Use this script just like batch_shape.sh but with a different name for the groupfile. This one is for if some of the subjects fail to process, like when a compute node causes trouble for the job scheduler. Make sure you use the exact same arguments as the batch_shape command, but with a different csv groupfile name. This script will find and process all the subjects that did not get processed properly last time.
+Use this script just like batch_shape but with a different name for the groupfile. This one is for if some of the subjects fail to process, like when a compute node causes trouble for the job scheduler. Make sure you use the exact same arguments as the batch_shape command, but with a different csv groupfile name. This script will find and process all the subjects that did not get processed properly last time.
 
 EXAMPLE:
 

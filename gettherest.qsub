@@ -14,9 +14,6 @@ logdir=$3
 groupfile=$4
 
 #set runFS to the freesurfer output directory containing the subjects
-#runFS=/U1/tated/FreeSurferProcessed
-#outDirectory=/U1/hardyd/shapeOutput/shapeProcessed
-#groupfile=/U1/hardyd/shapeOutput/remaining.csv
 
 function usage {
 cat<<EOF
@@ -25,7 +22,7 @@ USAGE:
 
 $0 [Freesurfer results directory] [Shape output directory] [logfile directory] [ groupfile ]
 
-Use this script just like shapegroupqsub.sh but with a different name for the groupfile. This one is for if some of the subjects fail to process, like when a compute node causes trouble for the job scheduler. Make sure you use the exact same arguments as the shapegroupqsub command, but with a different csv groupfile name. This script will find and process all the subjects that did not get processed properly last time.
+Use this script just like batch_shape but with a different name for the groupfile. This one is for if some of the subjects fail to process, like when a compute node causes trouble for the job scheduler. Make sure you use the exact same arguments as the batch_shape command, but with a different csv groupfile name. This script will find and process all the subjects that did not get processed properly last time.
 
 EXAMPLE:
 
@@ -42,7 +39,6 @@ fi
 
 timestamp=`date +"%m-%d-%Y"`
 logdir=${logdir}/log-${timestamp}
-#logdir=/U1/hardyd/shapeOutput/log-${timestamp}/
 setROIS="10 11 12 13 17 18 26 49 50 51 52 53 54 58"
 
 #setROIS="26 58" 
