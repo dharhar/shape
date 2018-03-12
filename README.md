@@ -17,7 +17,7 @@ Run each script without any arguments to get the usage information. First run "b
 
 **shape viewer usage:**
 
-Go to a subject directory with the shape output files (specifically the resliced\_mesh files) and run the "render" script (not render.js) to copy to files to the rendering directory.
+Go to a subject directory with the shape output files (specifically the resliced\_mesh files) and run the "render" script (not render.js) in the viewer directory to copy the mesh files to the rendering directory.
 Go to the url where the rendering script is being served to see the 3d render.
 
 **License:**
