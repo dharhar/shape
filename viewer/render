@@ -1,7 +1,8 @@
 #!/bin/bash
 
-# Use this script to copy the mesh files to the renderer directory.
+# Use this script to copy the mesh files to the shape/viewer/files/ directory.
+# Make sure that directory is writable.
 # Just go to the shape output directory and run this script.
 # Go to the url where index.html is being served to see the 3d render.
 
-cp resliced_mesh* /usr/local/shape/viewer/
+cp resliced_mesh* /usr/local/shape/viewer/files/

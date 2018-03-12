@@ -1,11 +1,12 @@
 # shape
-enigma shape adapted for qsub and slurm clusters
+enigma shape adapted for GridEngine and Slurm clusters
 
 **setup:**
 
 In the 3 main scripts, there is a line saying "Change this to your enigma directory". Do that.
+You could also use the Ansible role in the MRI repo.
 
-To enable the 3d renderer, make sure the index.html file in the viewer directory is being served by a webserver, and make sure that directory is writable by whoever will be using it.
+To enable the 3d renderer, make sure the "viewer" directory is being served by a webserver. Make sure the files directory is writable by whoever will be using it. If you're using a URL other than hostname.org/shape, edit the filePath variable in "loader.js"
 
 **shape processor usage:**
 
