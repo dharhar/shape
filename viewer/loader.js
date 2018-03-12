@@ -1,4 +1,6 @@
-// If necessary, edit "filePath" in the "loadMeshFile" directory to fit your server setup.
+// If necessary, edit urlPath to fit your server setup. 
+// For example If you use hostname.org/shape instead of hostname.org, set it to "/shape"
+urlPath = "";
 
 function loader (txt) {
 
@@ -111,7 +113,7 @@ function loader (txt) {
 
 
 function loadMeshFile(meshFile) {
-  filePath =  "/shape/files/"+meshFile;
+  filePath = urlPath+"/files/"+meshFile;
   var meshRequest = createRequest();
   meshRequest.open("GET", filePath, true);
   meshRequest.onreadystatechange = function() {
