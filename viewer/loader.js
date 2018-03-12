@@ -74,10 +74,11 @@ function loader (txt) {
   }
 
   //center the model
+  var midx=(lx+hx)/2, midy=(ly+hy)/2, midz=(lz+hz)/2;
   for (var x=0; x<model.verts.length; x+=3) {
-    model.verts[x] -= (lx+hx)/2;
-    model.verts[x+1] -= (ly+hy)/2;
-    model.verts[x+2] -= (lz+hz)/2;
+    model.verts[x] -= midx;
+    model.verts[x+1] -= midy;
+    model.verts[x+2] -= midz;
   }
 
   //set up model program
