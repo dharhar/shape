@@ -29,7 +29,7 @@ function main(model) {
   }
 
   var lastFrame = 0;
-  var active = true;
+  var active = false;
   var radPerSec	= Math.PI;
   var fps = 65;
   var keys = {};
@@ -37,16 +37,10 @@ function main(model) {
                 r: {x:0, y:0, z:0}, }
 
   drawFrame(moves);
-  if (active) window.requestAnimationFrame(run);
-  /*
-  document.getElementById("c").onclick = function() {
-    active = (active==true? false : true);
-    if (active) window.requestAnimationFrame(run);
-  }
-  */
 
   function run(now) {
 
+    if (now - lastFrame > 100) lastFrame = now;
     var dt = (now - lastFrame)/1000;
     if (dt > 1/fps ) {
 
@@ -70,6 +64,15 @@ function main(model) {
     if (active) window.requestAnimationFrame(run); 
 
   }
+
+  onkeydown = onkeyup = function(e){
+    e = e || event;
+    active = e.type == 'keydown';
+    keys[keycodes[e.keyCode]] = active;
+    if (active) window.requestAnimationFrame(run);
+  }
+
+
 }
 
 

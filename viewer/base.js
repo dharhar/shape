@@ -99,9 +99,5 @@ keycodes = {
 }
 
 
-onkeydown = onkeyup = function(e){
-  e = e || event;
-  keys[keycodes[e.keyCode]] = e.type == 'keydown';
-}
 
 
